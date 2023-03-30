@@ -448,7 +448,7 @@ jobs:
   buildWithWindows:
     name: Build for ${{ matrix.targetPlatform }}
     runs-on: windows-2019
-    needs: [ buildWithLinux, buildWithMac ]
+    needs: buildWithLinux 
     outputs:
       buildVersion: ${{ steps.build.outputs.buildVersion }}
     strategy:
