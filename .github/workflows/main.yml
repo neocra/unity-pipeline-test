@@ -376,7 +376,7 @@ jobs:
   deployToMacAppStore:
     name: Deploy to the Mac App Store
     runs-on: macos-latest
-    needs: buildWithMac
+    needs: buildWithLinux
     if: github.event.action == 'published' || (contains(github.event.inputs.workflow_mode, 'release') && contains(github.event.inputs.workflow_mode, 'StandaloneOSX'))
     steps:
       - name: Checkout Repository
