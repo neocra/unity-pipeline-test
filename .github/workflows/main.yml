@@ -140,6 +140,19 @@ jobs:
           - iOS
           - StandaloneLinux64
           - WebGL
+          - StandaloneOSX
+        include:
+          - targetPlatform: Android
+            runOn: ubuntu-latest
+          - targetPlatform: iOS
+            runOn: macos-latest
+          - targetPlatform: StandaloneLinux64
+            runOn: ubuntu-latest
+          - targetPlatform: WebGL
+            runOn: ubuntu-latest
+          - targetPlatform: StandaloneOSX
+            runOn: macos-latest
+
     outputs:
       buildVersion: ${{ steps.build.outputs.buildVersion }}
     steps:
@@ -276,90 +289,90 @@ jobs:
           branch: main
           file_pattern: docs/**
           commit_message: Deploy to GitHub Pages
-  buildWithMac:
-    name: Build for StandaloneOSX
-    runs-on: macos-latest
-    needs: tests
-    outputs:
-      buildVersion: ${{ steps.build.outputs.buildVersion }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Create LFS file list
-        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
-      - name: Restore LFS cache
-        uses: actions/cache@v3
-        id: lfs-cache
-        with:
-          path: .git/lfs
-          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
-      - name: Git LFS Pull
-        run: |
-          git lfs pull
-          git add .
-          git reset --hard
-      - uses: actions/cache@v3
-        with:
-          path: Library
-          key: Library-buildMac-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
-          restore-keys: Library-buildMac-
-      - name: Build Unity Project
-        id: build
-        uses: game-ci/unity-builder@v2.2.0
-        env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-        with:
-          targetPlatform: StandaloneOSX
-          buildMethod: Cgs.Editor.BuildCgs.BuildOptions
-      - name: Fix File Permissions and Code-Sign
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_TEAM_NAME: ${{ secrets.APPLE_TEAM_NAME }}
-          APPLE_DISTRIBUTION_CERTIFICATE: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE }}
-          APPLE_DISTRIBUTION_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_PASSWORD }}
-          MAC_INSTALLER_CERTIFICATE: ${{ secrets.MAC_INSTALLER_CERTIFICATE }}
-          MAC_INSTALLER_PASSWORD: ${{ secrets.MAC_INSTALLER_PASSWORD }}
-          MAC_APP_BUNDLE_PATHS: Contents/PlugIns/StandaloneFileBrowser.bundle
-          MAC_BUILD_PATH: ${{ format('{0}/build/StandaloneOSX', github.workspace) }}
-          PROJECT_NAME: Card Game Simulator
-        run: |
-          bundle install
-          bundle exec fastlane mac fixversion
-          find $MAC_BUILD_PATH -type f -name "**.sh" -exec chmod +x {} \;
-          chmod +x fastlane/sign-mac-build.sh
-          ./fastlane/sign-mac-build.sh
-      - name: Upload Build
-        if: github.event.action == 'published' || contains(github.event.inputs.workflow_mode, 'StandaloneOSX') || contains(github.event.inputs.workflow_mode, 'Steam')
-        uses: actions/upload-artifact@v3
-        with:
-          name: cgs-StandaloneOSX
-          path: build/StandaloneOSX
-      - name: Upload App
-        uses: actions/upload-artifact@v3
-        if: github.event.action == 'published' || contains(github.event.inputs.workflow_mode, 'StandaloneOSX') || contains(github.event.inputs.workflow_mode, 'Steam')
-        with:
-          name: Card Game Simulator.app
-          path: build/StandaloneOSX/Card Game Simulator.app
-      - name: Zip App
-        uses: vimtor/action-zip@v1
-        if: github.event.action == 'published'
-        with:
-          files: build/StandaloneOSX/
-          dest: build/cgs-StandaloneOSX.zip
-      - name: Upload Zip to GitHub Release
-        uses: svenstaro/upload-release-action@v2
-        if: github.event.action == 'published'
-        with:
-          repo_token: ${{ secrets.CGS_PAT }}
-          asset_name: cgs-StandaloneOSX.zip
-          file: build/cgs-StandaloneOSX.zip
-          tag: ${{ github.ref }}
-          overwrite: true
-          body: ${{ github.event.release.body }}
+#  buildWithMac:
+#    name: Build for StandaloneOSX
+#    runs-on: macos-latest
+#    needs: tests
+#    outputs:
+#      buildVersion: ${{ steps.build.outputs.buildVersion }}
+#    steps:
+#      - name: Checkout Repository
+#        uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#      - name: Create LFS file list
+#        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+#      - name: Restore LFS cache
+#        uses: actions/cache@v3
+#        id: lfs-cache
+#        with:
+#          path: .git/lfs
+#          key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+#      - name: Git LFS Pull
+#        run: |
+#          git lfs pull
+#          git add .
+#          git reset --hard
+#      - uses: actions/cache@v3
+#        with:
+#          path: Library
+#          key: Library-buildMac-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+#          restore-keys: Library-buildMac-
+#      - name: Build Unity Project
+#        id: build
+#        uses: game-ci/unity-builder@v2.2.0
+#        env:
+#          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+#          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+#          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+#        with:
+#          targetPlatform: StandaloneOSX
+#          buildMethod: Cgs.Editor.BuildCgs.BuildOptions
+#      - name: Fix File Permissions and Code-Sign
+#        env:
+#          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+#          APPLE_TEAM_NAME: ${{ secrets.APPLE_TEAM_NAME }}
+#          APPLE_DISTRIBUTION_CERTIFICATE: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE }}
+#          APPLE_DISTRIBUTION_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_PASSWORD }}
+#          MAC_INSTALLER_CERTIFICATE: ${{ secrets.MAC_INSTALLER_CERTIFICATE }}
+#          MAC_INSTALLER_PASSWORD: ${{ secrets.MAC_INSTALLER_PASSWORD }}
+#          MAC_APP_BUNDLE_PATHS: Contents/PlugIns/StandaloneFileBrowser.bundle
+#          MAC_BUILD_PATH: ${{ format('{0}/build/StandaloneOSX', github.workspace) }}
+#          PROJECT_NAME: Card Game Simulator
+#        run: |
+#          bundle install
+#          bundle exec fastlane mac fixversion
+#          find $MAC_BUILD_PATH -type f -name "**.sh" -exec chmod +x {} \;
+#          chmod +x fastlane/sign-mac-build.sh
+#          ./fastlane/sign-mac-build.sh
+#      - name: Upload Build
+#        if: github.event.action == 'published' || contains(github.event.inputs.workflow_mode, 'StandaloneOSX') || contains(github.event.inputs.workflow_mode, 'Steam')
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: cgs-StandaloneOSX
+#          path: build/StandaloneOSX
+#      - name: Upload App
+#        uses: actions/upload-artifact@v3
+#        if: github.event.action == 'published' || contains(github.event.inputs.workflow_mode, 'StandaloneOSX') || contains(github.event.inputs.workflow_mode, 'Steam')
+#        with:
+#          name: Card Game Simulator.app
+#          path: build/StandaloneOSX/Card Game Simulator.app
+#      - name: Zip App
+#        uses: vimtor/action-zip@v1
+#        if: github.event.action == 'published'
+#        with:
+#          files: build/StandaloneOSX/
+#          dest: build/cgs-StandaloneOSX.zip
+#      - name: Upload Zip to GitHub Release
+#        uses: svenstaro/upload-release-action@v2
+#        if: github.event.action == 'published'
+#        with:
+#          repo_token: ${{ secrets.CGS_PAT }}
+#          asset_name: cgs-StandaloneOSX.zip
+#          file: build/cgs-StandaloneOSX.zip
+#          tag: ${{ github.ref }}
+#          overwrite: true
+#          body: ${{ github.event.release.body }}
   deployToMacAppStore:
     name: Deploy to the Mac App Store
     runs-on: macos-latest
