@@ -130,7 +130,7 @@ jobs:
           commit_message: Update Release Notes
   buildWithLinux:
     name: Build for ${{ matrix.targetPlatform }}
-    runs-on: ubuntu-latest
+    runs-on:  ${{ matrix.runOn }}
     needs: tests
     strategy:
       fail-fast: false
